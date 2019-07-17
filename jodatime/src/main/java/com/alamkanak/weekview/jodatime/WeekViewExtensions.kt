@@ -83,3 +83,17 @@ fun <T> WeekView<T>.setOnEmptyViewLongPressListener(
         }
     }
 }
+
+fun <T> WeekView<T>.setOnLoadMoreListener(
+    block: (startDate: LocalDate, endDate: LocalDate) -> Unit
+) {
+    onMonthChangeListener = object : OnMonthChangeListener<T> {
+        override fun onMonthChange(
+            startDate: Calendar,
+            endDate: Calendar
+        ): List<WeekViewDisplayable<T>> {
+            block(startDate.toLocalDate(), endDate.toLocalDate())
+            return emptyList()
+        }
+    }
+}

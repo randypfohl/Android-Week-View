@@ -11,9 +11,7 @@ internal class MonthLoader<T>(
 ) {
 
     fun load(period: Period): List<WeekViewEvent<T>> {
-        val listener = checkNotNull(onMonthChangeListener) {
-            "No OnMonthChangeListener found. Provide one via weekView.setOnMonthChangeListener()."
-        }
+        val listener = onMonthChangeListener ?: return emptyList()
 
         val startDate = today()
             .withYear(period.year)

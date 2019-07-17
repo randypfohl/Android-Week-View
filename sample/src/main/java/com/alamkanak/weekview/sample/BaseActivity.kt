@@ -6,32 +6,43 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import com.alamkanak.weekview.WeekView
-import com.alamkanak.weekview.WeekViewDisplayable
-import com.alamkanak.weekview.sample.data.model.Event
-import com.alamkanak.weekview.sample.data.EventsDatabase
+import com.alamkanak.weekview.adapters.setOnLoadMoreListener
 import com.alamkanak.weekview.sample.data.FakeEventsDatabase
+import com.alamkanak.weekview.sample.data.ReactiveEventsStore
+import com.alamkanak.weekview.sample.data.model.Event
 import java.util.Calendar
 import java.util.Locale
 
-open class CustomFontActivity : AppCompatActivity() {
+/**
+ * This is a base activity which contains week view and all the codes necessary to initialize the
+ * week view.
+ * Created by Raquib-ul-Alam Kanak on 1/3/2014.
+ * Website: http://alamkanak.github.io
+ */
+class BaseActivity : AppCompatActivity() {
 
     private var weekViewType = TYPE_THREE_DAY_VIEW
-    private lateinit var weekView: WeekView<Event>
-
-    private val database: EventsDatabase by lazy {
-        FakeEventsDatabase(this)
+    private val weekView: WeekView<Event> by lazy {
+        findViewById<WeekView<Event>>(R.id.weekView)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_custom_font)
+        setContentView(R.layout.activity_base)
 
-        weekView = findViewById(R.id.weekView)
+        val database = FakeEventsDatabase(this)
+        val store = ReactiveEventsStore(database)
+
         weekView.setOnEventClickListener(this::onEventClick)
-        weekView.setOnMonthChangeListener(this::onMonthChange)
         weekView.setOnEventLongPressListener(this::onEventLongPress)
-        weekView.setOnEmptyViewLongPressListener(this::onEmptyViewLongPress)
+        weekView.setOnEmptyViewClickListener(this::onEmptyViewLongPress)
+
+        weekView.setupWithPagedAdapter()
+        weekView.setOnLoadMoreListener(store::fetchEvents)
+
+        store.events.observe(this, Observer { weekView.submit(it) })
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -40,29 +51,30 @@ open class CustomFontActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+        when (item.itemId) {
             android.R.id.home -> {
                 onBackPressed()
-                true
+                return true
             }
             R.id.action_today -> {
                 weekView.goToToday()
-                true
+                return true
             }
             R.id.action_day_view -> {
                 openDayView(item)
-                true
+                return true
             }
             R.id.action_three_day_view -> {
                 openThreeDayView(item)
-                true
+                return true
             }
             R.id.action_week_view -> {
                 openWeekView(item)
-                true
+                return true
             }
-            else -> super.onOptionsItemSelected(item)
         }
+
+        return super.onOptionsItemSelected(item)
     }
 
     private fun openDayView(item: MenuItem) {
@@ -103,34 +115,19 @@ open class CustomFontActivity : AppCompatActivity() {
         return String.format(Locale.getDefault(), "Event of %02d:%02d %s/%d", hour, minute, month, dayOfMonth)
     }
 
-    private fun onMonthChange(
-        startDate: Calendar,
-        endDate: Calendar
-    ): List<WeekViewDisplayable<Event>> {
-        return database.getEventsInRange(startDate, endDate)
-    }
-
-    private fun onEventClick(
-        data: Event,
-        eventRect: RectF
-    ) {
+    private fun onEventClick(data: Event, eventRect: RectF) {
         Toast.makeText(this, "Clicked " + data.title, Toast.LENGTH_SHORT).show()
     }
 
-    private fun onEventLongPress(
-        data: Event,
-        eventRect: RectF
-    ) {
+    private fun onEventLongPress(data: Event, eventRect: RectF) {
         Toast.makeText(this, "Long pressed event: " + data.title, Toast.LENGTH_SHORT).show()
     }
 
-    private fun onEmptyViewLongPress(
-        time: Calendar
-    ) {
+    private fun onEmptyViewLongPress(time: Calendar) {
         Toast.makeText(this, "Empty view long pressed: " + getEventTitle(time), Toast.LENGTH_SHORT).show()
     }
 
-    private companion object {
+    companion object {
         private const val TYPE_DAY_VIEW = 1
         private const val TYPE_THREE_DAY_VIEW = 2
         private const val TYPE_WEEK_VIEW = 3

@@ -15,7 +15,7 @@ import com.alamkanak.weekview.OnEventLongPressListener;
 import com.alamkanak.weekview.OnMonthChangeListener;
 import com.alamkanak.weekview.WeekView;
 import com.alamkanak.weekview.WeekViewDisplayable;
-import com.alamkanak.weekview.sample.apiclient.Event;
+import com.alamkanak.weekview.sample.data.model.Event;
 import com.alamkanak.weekview.sample.data.EventsDatabase;
 import com.alamkanak.weekview.sample.data.FakeEventsDatabase;
 

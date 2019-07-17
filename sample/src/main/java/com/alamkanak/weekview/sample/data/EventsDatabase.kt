@@ -4,16 +4,23 @@ import android.content.Context
 import androidx.core.content.ContextCompat
 import com.alamkanak.weekview.WeekViewDisplayable
 import com.alamkanak.weekview.sample.R
-import com.alamkanak.weekview.sample.apiclient.Event
+import com.alamkanak.weekview.sample.data.model.Event
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
 interface EventsDatabase {
+    fun getAll(): List<WeekViewDisplayable<Event>>
     fun getEventsInRange(startDate: Calendar, endDate: Calendar): List<WeekViewDisplayable<Event>>
 }
 
 class FakeEventsDatabase(private val context: Context) : EventsDatabase {
+
+    override fun getAll(): List<WeekViewDisplayable<Event>> {
+        val start = Calendar.getInstance().apply { timeInMillis = 0L }
+        val end = Calendar.getInstance().apply { timeInMillis = Long.MAX_VALUE }
+        return getEventsInRange(start, end)
+    }
 
     override fun getEventsInRange(
         startDate: Calendar,

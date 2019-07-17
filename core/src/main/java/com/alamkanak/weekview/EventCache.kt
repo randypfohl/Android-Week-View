@@ -14,6 +14,10 @@ internal class EventCache<T>(
     private val normalEventChipsByDate = ArrayMap<Calendar, MutableList<EventChip<T>>>()
     private val allDayEventChipsByDate = ArrayMap<Calendar, MutableList<EventChip<T>>>()
 
+    fun replace(events: List<WeekViewDisplayable<T>>) {
+        // TODO
+    }
+
     var previousPeriodEvents: List<WeekViewEvent<T>>? = null
     var currentPeriodEvents: List<WeekViewEvent<T>>? = null
     var nextPeriodEvents: List<WeekViewEvent<T>>? = null
@@ -72,8 +76,21 @@ internal class EventCache<T>(
         return results
     }
 
+    fun storeAllEvents(items: List<WeekViewEvent<T>>) {
+        // TODO Clear existing
+        sortAndCacheEvents(items)
+    }
+
     fun getAllDayEventsInRange(dateRange: List<Calendar>): List<WeekViewEvent<T>> {
         return getEventChipsInRange(allEventChips, dateRange).filter { it.isAllDay }
+    }
+
+    fun getSingleEventsInRange(dateRange: List<Calendar>): List<WeekViewEvent<T>> {
+        val results = mutableListOf<WeekViewEvent<T>>()
+        for (date in dateRange) {
+            results += normalEventChipsByDate[date].orEmpty().map { it.event }
+        }
+        return results
     }
 
     fun clearEventChipsCache() {

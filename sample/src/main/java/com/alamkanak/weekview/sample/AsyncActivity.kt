@@ -7,23 +7,51 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
 import com.alamkanak.weekview.WeekView
 import com.alamkanak.weekview.WeekViewDisplayable
-import com.alamkanak.weekview.WeekViewEvent
-import com.alamkanak.weekview.sample.apiclient.ApiEvent
 import com.alamkanak.weekview.sample.data.FakeEventsApi
+import com.alamkanak.weekview.sample.data.model.ApiEvent
 import java.util.Calendar
 import java.util.Locale
+
+class AsyncViewModel(
+    private val eventsApi: FakeEventsApi
+) : ViewModel() {
+
+    private val _viewState = MutableLiveData<ViewState>()
+    val viewState: LiveData<ViewState> = _viewState
+
+    init {
+        loadEvents()
+    }
+
+    private fun loadEvents() {
+        _viewState.value = ViewState(isLoading = true)
+        eventsApi.fetchEvents {
+            _viewState.value = ViewState(events = it)
+        }
+    }
+}
+
+data class ViewState(
+    val events: List<ApiEvent> = emptyList(),
+    val isLoading: Boolean = false
+)
 
 class AsyncActivity : AppCompatActivity() {
 
     private val events = arrayListOf<WeekViewDisplayable<ApiEvent>>()
-    private var calledNetwork = false
     private var weekViewType = TYPE_THREE_DAY_VIEW
 
     private lateinit var weekView: WeekView<ApiEvent>
 
-    private val apiService = FakeEventsApi(this)
+    private val viewModel: AsyncViewModel by lazy {
+        AsyncViewModel(FakeEventsApi(this))
+    }
 
     private val progressDialog: ProgressDialog by lazy {
         ProgressDialog(this).apply {
@@ -37,12 +65,21 @@ class AsyncActivity : AppCompatActivity() {
         setContentView(R.layout.activity_base)
 
         weekView = findViewById(R.id.weekView)
+        weekView.setupWithDefaultAdapter()
+
         weekView.setOnEventClickListener(this::onEventClick)
         weekView.setOnEventLongPressListener(this::onEventLongPress)
-        weekView.setOnMonthChangeListener(this::onMonthChange)
         weekView.setOnEmptyViewLongPressListener(this::onEmptyViewLongPress)
 
-        progressDialog.show()
+        viewModel.viewState.observe(this, Observer {
+            if (it.isLoading) {
+                progressDialog.show()
+            } else {
+                progressDialog.dismiss()
+            }
+
+            weekView.submit(it.events)
+        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -112,44 +149,6 @@ class AsyncActivity : AppCompatActivity() {
         val month = time.get(Calendar.MONTH) + 1
         val dayOfMonth = time.get(Calendar.DAY_OF_MONTH)
         return String.format(Locale.getDefault(), "Event of %02d:%02d %s/%d", hour, minute, month, dayOfMonth)
-    }
-
-    private fun onMonthChange(
-            startDate: Calendar,
-            endDate: Calendar
-    ): List<WeekViewDisplayable<ApiEvent>> {
-        val newYear = startDate.get(Calendar.YEAR)
-        val newMonth = startDate.get(Calendar.MONTH)
-
-        // Fetch events from network if it hasn't been done already
-        if (!calledNetwork) {
-            apiService.fetchEvents(this::onEventsFetched)
-            calledNetwork = true
-        }
-
-        return events.filter { eventMatches(it.toWeekViewEvent(), newYear, newMonth) }
-    }
-
-    /**
-     * Checks if an event falls into a specific year and month.
-     * @param event The event to check for.
-     * @param year The year.
-     * @param month The month.
-     * @return True if the event matches the year and month.
-     */
-    private fun eventMatches(event: WeekViewEvent<*>, year: Int, month: Int): Boolean {
-        return event.startTime.get(Calendar.YEAR) == year
-                && event.startTime.get(Calendar.MONTH) == month - 1
-                || event.endTime.get(Calendar.YEAR) == year
-                && event.endTime.get(Calendar.MONTH) == month - 1
-    }
-
-    private fun onEventsFetched(events: List<ApiEvent>) {
-        this.events.clear()
-        this.events.addAll(events)
-
-        progressDialog.dismiss()
-        weekView.notifyDataSetChanged()
     }
 
     private fun onEventClick(event: ApiEvent, eventRect: RectF) {
