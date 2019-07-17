@@ -3,7 +3,7 @@ package com.alamkanak.weekview.sample.data
 import android.app.Activity
 import android.content.Context
 import android.os.AsyncTask
-import com.alamkanak.weekview.sample.apiclient.ApiEvent
+import com.alamkanak.weekview.sample.data.model.ApiEvent
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.lang.Thread.sleep

@@ -21,6 +21,22 @@ internal class EventChipsProvider<T>(
         }
     }
 
+    fun storeEventsAndCalculateEventChipPositions(
+        periodsWithEvents: Map<Period, List<WeekViewEvent<T>>>
+    ) {
+        val sortedPeriods = periodsWithEvents.keys.sortedBy { it.startDate }
+        val fetchedPeriods = FetchPeriods.from(sortedPeriods)
+
+        cache.update(
+            previousPeriodEvents = periodsWithEvents[fetchedPeriods.previous].orEmpty(),
+            currentPeriodEvents = periodsWithEvents[fetchedPeriods.current].orEmpty(),
+            nextPeriodEvents = periodsWithEvents[fetchedPeriods.next].orEmpty(),
+            fetchedPeriods = fetchedPeriods
+        )
+
+        calculateEventChipPositions()
+    }
+
     private fun loadEventsAndCalculateEventChipPositions(fetchPeriods: FetchPeriods) {
         if (viewState.shouldRefreshEvents) {
             cache.clear()
@@ -75,7 +91,7 @@ internal class EventChipsProvider<T>(
         cache.update(previousPeriodEvents, currentPeriodEvents, nextPeriodEvents, fetchPeriods)
     }
 
-    private fun calculateEventChipPositions() {
+    fun calculateEventChipPositions() {
         val results = mutableListOf<EventChip<T>>()
         val groups = cache.groupedByDate()
 

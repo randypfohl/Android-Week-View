@@ -12,6 +12,8 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.core.view.ViewCompat
 import com.alamkanak.weekview.Constants.UNINITIALIZED
+import com.alamkanak.weekview.adapters.WeekViewBaseAdapter
+import com.alamkanak.weekview.adapters.WeekViewPagedAdapter
 import java.util.Calendar
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -39,6 +41,27 @@ class WeekView<T> @JvmOverloads constructor(
 
     private val drawingContext = DrawingContext(configWrapper)
     private val eventChipsProvider = EventChipsProvider(configWrapper, eventCache, viewState)
+
+    private var dataAdapter: Adapter<T>? = null
+
+    fun setupWithDefaultAdapter() {
+        onMonthChangeListener = null
+        dataAdapter = WeekViewBaseAdapter<T>().also {
+            it.init(this, eventCache, eventChipsProvider, drawingContext)
+        }
+    }
+
+    fun setupWithPagedAdapter() {
+        onMonthChangeListener = null
+        dataAdapter = WeekViewPagedAdapter<T>().also {
+            it.init(this, viewState, eventChipsProvider)
+            it.loadInitial()
+        }
+    }
+
+    fun submit(items: List<WeekViewDisplayable<T>>) {
+        dataAdapter?.submit(items)
+    }
 
     private val paint = Paint()
 
@@ -1356,6 +1379,10 @@ class WeekView<T> @JvmOverloads constructor(
         drawers
             .filterIsInstance(CachingDrawer::class.java)
             .forEach { it.clear() }
+    }
+
+    internal interface Adapter<T> {
+        fun submit(items: List<WeekViewDisplayable<T>>)
     }
 
 }
