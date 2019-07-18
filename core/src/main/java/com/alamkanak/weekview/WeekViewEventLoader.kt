@@ -6,12 +6,19 @@ package com.alamkanak.weekview
  * an interface that can be implemented in one's actual data class and handles the conversion to a
  * [WeekViewEvent].
  */
-internal class MonthLoader<T>(
-    var onMonthChangeListener: OnMonthChangeListener<T>?
+internal class WeekViewEventLoader<T>(
+    var onLoadMoreListener: OnLoadMoreListener?
 ) {
 
-    fun load(period: Period): List<WeekViewEvent<T>> {
-        val listener = onMonthChangeListener ?: return emptyList()
+    private val fetchingPeriods = mutableSetOf<Period>()
+
+    fun load(period: Period) {
+        val listener = onLoadMoreListener ?: return
+        if (fetchingPeriods.contains(period)) {
+            return
+        }
+
+        fetchingPeriods += period
 
         val startDate = today()
             .withYear(period.year)
@@ -23,9 +30,11 @@ internal class MonthLoader<T>(
             .withDayOfMonth(maxDays)
             .atEndOfDay
 
-        return listener
-            .onMonthChange(startDate, endDate)
-            .map { it.toWeekViewEvent() }
+        return listener.onLoadMore(startDate, endDate)
+    }
+
+    fun completeFetching(periods: Set<Period>) {
+        fetchingPeriods.removeAll(periods)
     }
 
 }

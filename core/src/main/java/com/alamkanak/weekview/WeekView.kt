@@ -44,21 +44,25 @@ class WeekView<T> @JvmOverloads constructor(
 
     private var dataAdapter: Adapter<T>? = null
 
-    fun setupWithDefaultAdapter() {
-        onMonthChangeListener = null
-        dataAdapter = WeekViewBaseAdapter<T>().also {
-            it.init(this, eventCache, eventChipsProvider, drawingContext)
-        }
+    init {
+        setupWithDefaultAdapter()
     }
 
-    fun setupWithPagedAdapter() {
-        onMonthChangeListener = null
-        dataAdapter = WeekViewPagedAdapter<T>().also {
-            it.init(this, viewState, eventChipsProvider)
+    private fun setupWithDefaultAdapter() {
+        // onMonthChangeListener = null
+        dataAdapter = WeekViewBaseAdapter<T>(this, eventCache, eventChipsProvider, drawingContext)
+    }
+
+    private fun setupWithPagedAdapter() {
+        // onMonthChangeListener = null
+        dataAdapter = WeekViewPagedAdapter<T>(this, viewState, eventChipsProvider).also {
             it.loadInitial()
         }
     }
 
+    /**
+     * Accepts a list of [WeekViewDisplayable]s and displays them in [WeekView].
+     */
     fun submit(items: List<WeekViewDisplayable<T>>) {
         dataAdapter?.submit(items)
     }
@@ -1203,27 +1207,35 @@ class WeekView<T> @JvmOverloads constructor(
     }
 
     @Deprecated(
-        "Use onMonthChangeListener",
-        ReplaceWith("onMonthChangeListener")
+        "Use onLoadMoreListener",
+        ReplaceWith("onLoadMoreListener")
     )
     fun getMonthChangeListener() = onMonthChangeListener
 
+    @Deprecated(
+        "Use onLoadMoreListener",
+        ReplaceWith("onLoadMoreListener")
+    )
     var onMonthChangeListener: OnMonthChangeListener<T>?
         get() {
-            return eventChipsProvider.monthLoader?.onMonthChangeListener
+            return null // TODO return eventChipsProvider.eventLoader?.onMonthChangeListener
         }
         set(value) {
-            eventChipsProvider.monthLoader = MonthLoader(value)
+            // TODO eventChipsProvider.eventLoader = WeekViewEventLoader(value)
         }
 
     @Deprecated(
-        "Use onMonthChangeListener",
-        ReplaceWith("onMonthChangeListener")
+        "Use setOnLoadMoreListener",
+        ReplaceWith("setOnLoadMoreListener")
     )
     fun setMonthChangeListener(listener: OnMonthChangeListener<T>) {
         onMonthChangeListener = listener
     }
 
+    @Deprecated(
+        "Use setOnLoadMoreListener",
+        ReplaceWith("setOnLoadMoreListener")
+    )
     fun setOnMonthChangeListener(
         block: (startDate: Calendar, endDate: Calendar) -> List<WeekViewDisplayable<T>>
     ) {
@@ -1236,6 +1248,28 @@ class WeekView<T> @JvmOverloads constructor(
             }
         }
     }
+
+    var onLoadMoreListener: OnLoadMoreListener?
+        get() = eventChipsProvider.eventLoader?.onLoadMoreListener
+        set(value) {
+            eventChipsProvider.eventLoader?.onLoadMoreListener = value
+            if (value != null) {
+                setupWithPagedAdapter()
+            } else {
+                setupWithDefaultAdapter()
+            }
+        }
+
+    fun setOnLoadMoreListener(
+        block: (startDate: Calendar, endDate: Calendar) -> Unit
+    ) {
+        onLoadMoreListener = object : OnLoadMoreListener {
+            override fun onLoadMore(startDate: Calendar, endDate: Calendar) {
+                block(startDate, endDate)
+            }
+        }
+    }
+
 
     @Deprecated(
         "Use onEventLongPressListener",
