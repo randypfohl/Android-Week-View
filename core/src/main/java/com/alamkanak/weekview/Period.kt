@@ -8,9 +8,7 @@ internal data class FetchPeriods(
     val next: Period
 ) {
 
-    fun getPeriod(month: Int): Period? {
-        return listOf(previous, current, next).firstOrNull { it.month == month }
-    }
+    fun toList() = listOf(previous, current, next)
 
     internal companion object {
 

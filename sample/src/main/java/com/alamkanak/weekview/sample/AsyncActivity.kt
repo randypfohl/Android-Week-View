@@ -53,6 +53,7 @@ class AsyncActivity : AppCompatActivity() {
         AsyncViewModel(FakeEventsApi(this))
     }
 
+    @Suppress("DEPRECATION")
     private val progressDialog: ProgressDialog by lazy {
         ProgressDialog(this).apply {
             setCancelable(false)
@@ -65,8 +66,6 @@ class AsyncActivity : AppCompatActivity() {
         setContentView(R.layout.activity_base)
 
         weekView = findViewById(R.id.weekView)
-        weekView.setupWithDefaultAdapter()
-
         weekView.setOnEventClickListener(this::onEventClick)
         weekView.setOnEventLongPressListener(this::onEventLongPress)
         weekView.setOnEmptyViewLongPressListener(this::onEmptyViewLongPress)

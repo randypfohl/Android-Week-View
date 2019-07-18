@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.alamkanak.weekview.WeekView
-import com.alamkanak.weekview.adapters.setOnLoadMoreListener
 import com.alamkanak.weekview.sample.data.FakeEventsDatabase
 import com.alamkanak.weekview.sample.data.ReactiveEventsStore
 import com.alamkanak.weekview.sample.data.model.Event
@@ -38,8 +37,6 @@ class BaseActivity : AppCompatActivity() {
         weekView.setOnEventClickListener(this::onEventClick)
         weekView.setOnEventLongPressListener(this::onEventLongPress)
         weekView.setOnEmptyViewClickListener(this::onEmptyViewLongPress)
-
-        weekView.setupWithPagedAdapter()
         weekView.setOnLoadMoreListener(store::fetchEvents)
 
         store.events.observe(this, Observer { weekView.submit(it) })

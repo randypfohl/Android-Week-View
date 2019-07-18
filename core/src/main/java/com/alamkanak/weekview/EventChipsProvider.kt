@@ -6,7 +6,7 @@ internal class EventChipsProvider<T>(
     private val viewState: WeekViewViewState
 ) {
 
-    var monthLoader: MonthLoader<T>? = null
+    var eventLoader: WeekViewEventLoader<T>? = null
 
     fun loadEventsIfNecessary() {
         val hasNoEvents = cache.hasEvents.not()
@@ -72,26 +72,25 @@ internal class EventChipsProvider<T>(
             }
         }
 
-        val loader = checkNotNull(monthLoader) {
-            "No OnMonthChangeListener found. Provide one via weekView.setOnMonthChangeListener()."
-        }
-
         if (previousPeriodEvents == null) {
-            previousPeriodEvents = loader.load(fetchPeriods.previous)
+            eventLoader?.load(fetchPeriods.previous)
         }
 
         if (currentPeriodEvents == null) {
-            currentPeriodEvents = loader.load(fetchPeriods.current)
+            eventLoader?.load(fetchPeriods.current)
         }
 
         if (nextPeriodEvents == null) {
-            nextPeriodEvents = loader.load(fetchPeriods.next)
+            eventLoader?.load(fetchPeriods.next)
         }
-
-        cache.update(previousPeriodEvents, currentPeriodEvents, nextPeriodEvents, fetchPeriods)
     }
 
-    fun calculateEventChipPositions() {
+    fun storeEventsAndCalculateEventChipPositions(events: List<WeekViewEvent<T>>) {
+        cache.storeAllEvents(events)
+        calculateEventChipPositions()
+    }
+
+    private fun calculateEventChipPositions() {
         val results = mutableListOf<EventChip<T>>()
         val groups = cache.groupedByDate()
 
